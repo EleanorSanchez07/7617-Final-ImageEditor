@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>CSUMB Image Filter Editor</title>
+    {{ bootstrap.load_css() }}
+    <style>
+        .filter-sidebar {
+            height: 100%;
+            min-height: 400px;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .image-display-area {
+            border: 2px dashed #c21616;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dark-blue-header {
+        background-color: #000047; /* Example dark blue */
+        color: white;
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='uploads/Monte_Logos.png') }}" 
+                 alt="Logo" 
+                 width="75" 
+                 height="75" 
+                 class="d-inline-block align-text-top">
+            CSUMB Creative Mode
+        </a>
+    </div>
+</nav>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">CSUMB Image Filter Editor</h1>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="filter-sidebar d-grid gap-2">
+                    <h4 class="text-center">Filters</h4>
+                    <button class="btn btn-outline-primary">Sepia</button>
+                    <button class="btn btn-outline-primary">Negative</button>
+                    <button class ="btn btn-outline-primary"> Chroma </button>
+                    <button class ="btn btn-outline-primary"> Crop </button>
+                    <button class="btn btn-outline-primary">Shrink</button>
+                    <button class="btn btn-outline-primary">Grow</button>
+                    <button class="btn btn-outline-primary">Mirror</button>
+                    <hr>
+                    <button class="btn btn-outline-info">Pixel Shuffle</button>
+                    <button class ="btn btn-outline-info"> Random Stack </button>
+                    <hr>
+                    <button class="btn btn-outline-success">Stack</button>
+                    <button class ="btn btn-success"> Save </button>
+                    <button class="btn btn-danger mt-2">Reset</button>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow">
+                    <div class="card-header dark-blue-header text-white">Your Image</div>
+                    <div class="card-body text-center">
+                        <div class="image-display-area">
+                            <p class="text-muted">No image uploaded yet. Drag and drop or use the input below.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <form action="/" method="post" enctype="multipart/form-data">
+                            <input type="file" class="form-control mb-2" name="image_file">
+                            <button type="submit" class="btn btn-primary w-100">Upload Image</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ bootstrap.load_js() }}
+</body>
+</html>
+
+
+<!-- Works Cited:
+Francis, Paige. “CSUMB Marketing Team Calls for a New and Improved Logo.”
+Thelutrinae.com, the Lutrinae, 18 Oct. 2026, thelutrinae.com/wp-content/uploads/2023/10/Monte_Logos.png. Accessed 27 Apr. 2026. -->
