@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>   
+    <title>Color Filters</title>
+</head>
+<body>
+    <h1>Apply Image Filters</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" required><br><br>
+
+        <button type="submit" name="filter" value="sepia">Sepia</button>
+        <button type="submit" name="filter" value="negative">Negative</button>
+    </form>
+
+    {% if output %}
+        <h2>Result:</h2>
+        <img src="{{ output }}" width="400">
+    {% endif %}
+</body>
+</html>

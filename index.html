@@ -1,0 +1,329 @@
+<!-- <body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="{{ url_for('static', filename='uploads/Monte_Logos.png') }}"
+                     alt="Logo"
+                     width="75"
+                     height="75"
+                     class="d-inline-block align-text-top">
+                CSUMB Creative Mode
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">CSUMB Image Filter Editor</h1>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="filter-sidebar d-grid gap-2">
+                    <h4 class="text-center">Filters</h4>
+
+                    <button class="btn btn-outline-primary" disabled>Sepia</button>
+                    <button class="btn btn-outline-primary" disabled>Negative</button>
+                    <button class="btn btn-outline-primary" disabled>Chroma</button>
+                    <button class="btn btn-outline-primary" disabled>Crop</button>
+                    <button class="btn btn-outline-primary" disabled>Shrink</button>
+                    <button class="btn btn-outline-primary" disabled>Grow</button>
+
+                    {% if image_name %}
+                    <form action="/" method="post">
+                        <input type="hidden" name="action" value="mirror">
+                        <input type="hidden" name="current_image" value="{{ image_name }}">
+                        <button type="submit" class="btn btn-outline-primary w-100">Mirror</button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-outline-primary" disabled>Mirror</button>
+                    {% endif %}
+
+                    <hr>
+
+                    <button class="btn btn-outline-info" disabled>Pixel Shuffle</button>
+                    <button class="btn btn-outline-info" disabled>Random Stack</button>
+
+                    <hr>
+
+                    <button class="btn btn-outline-success" disabled>Stack</button>
+                    <button class="btn btn-success" disabled>Save</button>
+
+                    <form action="/" method="post">
+                        <input type="hidden" name="action" value="reset">
+                        <button type="submit" class="btn btn-danger mt-2 w-100">Reset</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow">
+
+                    <div class="card-header dark-blue-header">
+                        Your Image
+                    </div>
+
+                    <div class="card-body text-center p-0">
+                        <div class="image-display-area">
+                            {% if image_name %}
+                                <img src="{{ url_for('static', filename='uploads/' + image_name) }}"
+                                     class="img-fluid"
+                                     alt="User Image">
+                            {% else %}
+                                <p class="text-muted">
+                                    No image uploaded yet. Use the input below.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <form action="/" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="action" value="upload">
+                            <input type="file" class="form-control mb-2" name="image_file">
+                            <button type="submit" class="btn btn-primary w-100">
+                                Upload Image
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ bootstrap.load_js() }}
+</body>
+</html> -->
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>CSUMB Image Filter Editor</title>
+    {{ bootstrap.load_css() }}
+    <style>
+        .filter-sidebar {
+            height: 100%;
+            min-height: 400px;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .image-display-area {
+            border: 2px dashed #1669c26d;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dark-blue-header {
+            background-color: #000047;
+            color: white;
+        }
+        .image-display-area {
+            width: 100%;
+            height: 500px;
+            background-color: #5b95caa8;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-display-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="{{ url_for('static', filename='uploads/Monte_Logos.png') }}"
+                     alt="Logo"
+                     width="75"
+                     height="75"
+                     class="d-inline-block align-text-top">
+                CSUMB Creative Mode
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">CSUMB Image Filter Editor</h1>
+
+        <div class="row">
+            <div class="col-md-3">
+                <form action="/" method="post">
+                    <input type="hidden" name="current_image" value="{{ image_name if image_name else '' }}">
+
+                    <div class="filter-sidebar d-grid gap-2">
+                        <h4 class="text-center">Filters</h4>
+
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="sepia">Sepia</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="negative">Negative</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="chroma">Chroma</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="crop">Crop</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="shrink">Shrink</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="grow">Grow</button>
+                        <button class="btn btn-outline-primary" type="submit" name="filter" value="mirror">Mirror</button>
+                        <hr>
+                        <button class="btn btn-outline-info" type="submit" name="filter" value="pixel_shuffle">Pixel Shuffle</button>
+                        <button class="btn btn-outline-info" type="submit" name="filter" value="random_stack">Random Stack</button>
+                        <hr>
+                        <button class="btn btn-outline-success" type="submit" name="filter" value="stack">Stack</button>
+                        <button class="btn btn-success" type="submit" name="filter" value="save">Save</button>
+                        <button class="btn btn-danger mt-2" type="submit" name="filter" value="reset">Reset</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow">
+                    <div class="card-header dark-blue-header text-white">Your Image</div>
+
+                    <div class="card-body text-center p-0">
+                        <div class="image-display-area">
+                            {% if image_name %}
+                            <img src="{{ url_for('static', filename='uploads/' + image_name) }}"
+                                 class="img-fluid" alt="User Image">
+                            {% else %}
+                            <p class="text-muted">No image uploaded yet. Use the input below.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <form action="/" method="post" enctype="multipart/form-data">
+                            <input type="file" class="form-control mb-2" name="image_file">
+                            <button type="submit" class="btn btn-primary w-100">Upload Image</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ bootstrap.load_js() }}
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>CSUMB Image Filter Editor</title>
+    {{ bootstrap.load_css() }}
+    <style>
+        .filter-sidebar { /*Side bar(buttons) info*/
+            height: 100%;
+            min-height: 400px;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .image-display-area { /* the area being displayed in card body*/
+            border: 2px dashed #1669c26d;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dark-blue-header { /* The banner on top of the image*/
+        background-color: #000047;
+        color: white;
+        }
+        .image-display-area {
+            width: 100%;
+            height: 500px; /* Forces a consistent size */
+            background-color: #5b95caa8; /*Makes a backgrund to differentiate from card*/
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+                align-items: center;
+        }
+
+        .image-display-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Keeps the user image in its standard form*/
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            /*Makes the Monte logo stay top left corner*/
+            <img src="{{ url_for('static', filename='uploads/Monte_Logos.png') }}" 
+                 alt="Logo" 
+                 width="75" 
+                 height="75" 
+                 class="d-inline-block align-text-top">
+            CSUMB Creative Mode
+        </a>
+    </div>
+</nav>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">CSUMB Image Filter Editor</h1> /*Project title display*/
+
+        <div class="row">
+            <div class="col-md-3">
+                /*Creation of sidebar*/
+                <div class="filter-sidebar d-grid gap-2">
+                    <h4 class="text-center">Filters</h4> /*Side Bar title*/
+
+                    /* The function buttons differentiated by category*/
+                    <button class="btn btn-outline-primary">Sepia</button>
+                    <button class="btn btn-outline-primary">Negative</button>
+                    <button class ="btn btn-outline-primary"> Chroma </button>
+                    <button class ="btn btn-outline-primary"> Crop </button>
+                    <button class="btn btn-outline-primary">Shrink</button>
+                    <button class="btn btn-outline-primary">Grow</button>
+                    <button class="btn btn-outline-primary">Mirror</button>
+                    <hr>
+                    <button class="btn btn-outline-info">Pixel Shuffle</button>
+                    <button class ="btn btn-outline-info"> Random Stack </button>
+                    <hr>
+                    <button class="btn btn-outline-success">Stack</button>
+                    <button class ="btn btn-success"> Save </button>
+                    <button class="btn btn-danger mt-2">Reset</button>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow">
+
+                    /*Image header dark blue color and white text for readability*/
+                    <div class="card-header dark-blue-header text-white">Your Image</div>
+                            /*Image input*/
+                        <div class="card-body text-center p-0"> 
+                            <div class="image-display-area">
+                                {% if image_name %}
+                                <img src="{{ url_for('static', filename='uploads/' + image_name) }}" 
+                                    class="img-fluid" alt="User Image">
+                                {% else %}
+                                <p class="text-muted">No image uploaded yet. Use the input below.</p>
+                                {% endif %}
+                                </div>
+                            </div>
+                    <div class="card-footer">
+                        <form action="/" method="post" enctype="multipart/form-data">
+                            <input type="file" class="form-control mb-2" name="image_file">
+                            <button type="submit" class="btn btn-primary w-100">Upload Image</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ bootstrap.load_js() }}
+</body>
+</html>
+
+
+<!-- Works Cited:
+Francis, Paige. “CSUMB Marketing Team Calls for a New and Improved Logo.”
+Thelutrinae.com, the Lutrinae, 18 Oct. 2026, thelutrinae.com/wp-content/uploads/2023/10/Monte_Logos.png. Accessed 27 Apr. 2026. -->
