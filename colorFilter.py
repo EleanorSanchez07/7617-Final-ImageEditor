@@ -2,9 +2,46 @@
 # 4/27/2026
 from PIL import Image, ImageOps
 from flask import Flask, request, render_template
+import random
 
 app = Flask(__name__)
 
+#Jigsaw function
+def scarmble_jigsaw(img, grid_size = 4):
+   w, h = img.size
+
+   tile_w = w // grid_size
+   tile_h = h // grid_size
+
+   tiles = []
+
+   for row in range(grid_size):
+      for col in range(grid_size):
+         left = col * tile_w
+         upper = row * tile_h
+
+         # Last column/row must extend to the edge
+         right = (col + 1) * tile_w if col < grid_size - 1 else w
+         lower = (row + 1) * tile_h if row < grid_size - 1 else h
+
+         # Safety check: ensure valid crop box
+         if right > left and lower > upper:
+             tiles.append(img.crop((left, upper, right, lower)))
+
+    
+   random.shuffle(tiles)
+   scrambled = Image.new("RGB", (w, h))
+   index = 0
+
+   for row in range(grid_size):
+      for col in range(grid_size):
+         left = col * tile_w
+         upper = row * tile_h
+
+         scrambled.paste(tiles[index], (left, upper))
+         index += 1
+
+   return scrambled
 # Sepia Color Filter
 
 def sepia(p):
@@ -50,7 +87,8 @@ def index():
             img = apply_sepia(img)
         elif filter_type == "negative":
             img = apply_negative(img)
-
+        if filter_type == "scramble":
+            img = scramble_jigsaw(img)
         # Save result to static folder (Flask can serve it automatically)
         img.save("static/result.png")
         output = "static/result.png"
