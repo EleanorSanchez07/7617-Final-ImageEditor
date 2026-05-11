@@ -18,7 +18,7 @@ bs = Bootstrap5(app)
 def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str = None): # pyright: ignore[reportArgumentType]
     # Changes size of images we're working on. Reduce for performance, max should be 1440x1440. Bigger = waste.
     # The heat death of the universe will occur before my laptop finishes with anything above 256x256.
-    # new_background = new_background.resize((256, 256))
+    new_background = new_background.resize((256, 256))
     original = original.resize(new_background.size)
     
     orig_pixels = list(original.get_flattened_data())
