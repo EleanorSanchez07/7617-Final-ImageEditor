@@ -7,6 +7,11 @@ from colormath.color_diff import delta_e_cie2000
 
 import numpy
 
+import time
+import os
+from multiprocessing import Pool
+from typing import Any
+
 def patch_asscalar(a):
     return a.item()
 
@@ -15,32 +20,52 @@ setattr(numpy, "asscalar", patch_asscalar)
 app = Flask(__name__)
 bs = Bootstrap5(app)
 
+chroma_lab: sRGBColor | Any = sRGBColor(100, 100, 100)
+
+def chromakey_pixel_replacement(original_pix: tuple[int, int, int], replacement_pix: tuple[int, int, int]) -> tuple[int, int, int]:
+    global chroma_lab
+    
+    original_pix_converted = convert_color(sRGBColor(original_pix[0], original_pix[1], original_pix[2]), LabColor)
+    
+    if delta_e_cie2000(original_pix_converted, chroma_lab) < 77:
+        return replacement_pix
+    else:
+        return original_pix
+
 def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str = None): # pyright: ignore[reportArgumentType]
-    # Changes size of images we're working on. Reduce for performance, max should be 1440x1440. Bigger = waste.
-    # The heat death of the universe will occur before my laptop finishes with anything above 256x256.
+    # Changes size of images we're working on. Reduce for performance.
     new_background = new_background.resize((256, 256))
     original = original.resize(new_background.size)
+    
+    global chroma_lab
+    chroma_lab = convert_color(sRGBColor(chroma_color[0], chroma_color[1], chroma_color[2]), LabColor)
     
     orig_pixels = list(original.get_flattened_data())
     new_pixels = list(new_background.get_flattened_data())
 
-    chroma_lab = convert_color(sRGBColor(chroma_color[0], chroma_color[1], chroma_color[2]), LabColor)
-
-    for pix_index in range(len(orig_pixels)):
-        cur_pixel = convert_color(sRGBColor(orig_pixels[pix_index][0], orig_pixels[pix_index][1], orig_pixels[pix_index][2]), LabColor) # pyright: ignore[reportIndexIssue]        
+    # t = time.time()
+    with Pool() as pool:
+        async_results = [pool.apply_async(chromakey_pixel_replacement, args = (orig_pixels[i], new_pixels[i])) for i in range(len(orig_pixels))]
+        orig_pixels = [ar.get() for ar in async_results]
+    
+    # This is the old approach which is about 2x slower (on my machine anyway) than with my multiprocessing approach. -Eleanor
+    # for pix_index in range(len(orig_pixels)):
+    #     cur_pixel = convert_color(sRGBColor(orig_pixels[pix_index][0], orig_pixels[pix_index][1], orig_pixels[pix_index][2]), LabColor) # pyright: ignore[reportIndexIssue]        
         
-        if delta_e_cie2000(cur_pixel, chroma_lab) < 30:
-            orig_pixels[pix_index] = new_pixels[pix_index]
+    #     if delta_e_cie2000(cur_pixel, chroma_lab) < 77:
+    #         orig_pixels[pix_index] = new_pixels[pix_index]
+    # print(time.time() - t)
             
     original.putdata(orig_pixels) #pyright: ignore[reportArgumentType]
-    # original.show()
+    original.show()
     
     if(save_path != None):
         original.save(save_path)
         
     return original
 
-# chromakey(Image.open("Space Desert.jpg"), Image.open("Eleanor Colorful.png"), (29, 40, 58), "chromafied.png")
+chromakey(Image.open("static/images/Space Desert.jpg"), Image.open("static/images/Eleanor Colorful.png"), (29, 40, 58), "static/images/chromafied.png")
+
 @app.route("/eleanor.html")
 def eleanorPage():
     chromakey(Image.open("./static/images/Space Desert.jpg"), Image.open("./static/images/Eleanor Colorful.png"), (29, 40, 58), "./static/images/chromafied.png");
