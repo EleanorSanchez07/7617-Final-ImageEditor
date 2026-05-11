@@ -6,8 +6,10 @@ import os
 app = Flask (__name__)
 bootstrap = Bootstrap5(app)
 UPLOADS = 'static/uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+if not os.path.exists(UPLOAD):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+app.config('UPLOADS') = UPLOADS
 #Shrink Function 
 
 def shrink_image(path):
@@ -59,6 +61,5 @@ def img():
             image_name = current_image 
 
         return render_template('index.html', image_name=image_name)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    if __name__ == '__main__':
+        app.run(debug=True)
