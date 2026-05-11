@@ -8,41 +8,40 @@ app = Flask(__name__)
 
 #Jigsaw function
 def scarmble_jigsaw(img, grid_size = 4):
-   def scramble_jigsaw(img, grid_size = 4):
-    w, h = img.size
+   w, h = img.size
 
-    tile_w = w // grid_size
-    tile_h = h // grid_size
+   tile_w = w // grid_size
+   tile_h = h // grid_size
 
-    tiles = []
+   tiles = []
 
-    for row in range(grid_size):
-        for col in range(grid_size):
-            left = col * tile_w
-            upper = row * tile_h
+   for row in range(grid_size):
+      for col in range(grid_size):
+         left = col * tile_w
+         upper = row * tile_h
 
-            # Last column/row must extend to the edge
-            right = (col + 1) * tile_w if col < grid_size - 1 else w
-            lower = (row + 1) * tile_h if row < grid_size - 1 else h
+         # Last column/row must extend to the edge
+         right = (col + 1) * tile_w if col < grid_size - 1 else w
+         lower = (row + 1) * tile_h if row < grid_size - 1 else h
 
-            # Safety check: ensure valid crop box
-            if right > left and lower > upper:
-                tiles.append(img.crop((left, upper, right, lower)))
+         # Safety check: ensure valid crop box
+         if right > left and lower > upper:
+             tiles.append(img.crop((left, upper, right, lower)))
 
     
-    random.shuffle(tiles)
-    scrambled = Image.new("RGB", (w, h))
-    index = 0
+   random.shuffle(tiles)
+   scrambled = Image.new("RGB", (w, h))
+   index = 0
 
-    for row in range(grid_size):
-        for col in range(grid_size):
-            left = col * tile_w
-            upper = row * tile_h
+   for row in range(grid_size):
+      for col in range(grid_size):
+         left = col * tile_w
+         upper = row * tile_h
 
-            scrambled.paste(tiles[index], (left, upper))
-            index += 1
+         scrambled.paste(tiles[index], (left, upper))
+         index += 1
 
-    return scrambled
+   return scrambled
 # Sepia Color Filter
 
 def sepia(p):
