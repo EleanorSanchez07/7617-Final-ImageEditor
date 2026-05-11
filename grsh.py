@@ -59,3 +59,6 @@ def img():
             image_name = current_image 
 
         return render_template('index.html', image_name=image_name)
+
+if __name__ == '__main__':
+    app.run(debug=True)
