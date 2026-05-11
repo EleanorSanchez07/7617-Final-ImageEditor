@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 from flask_bootstrap import Bootstrap5 
 from PIL import Image
 import os 
-import random
 
 app = Flask (__name__)
 bootstrap = Bootstrap5(app)
@@ -30,29 +29,33 @@ def grow_image(path):
     img = img.resize()(width, height)
     img.save(path)
 
-
-
 @app.route('/', methods=['GET', 'POST'])
 def img():
     image_name = None
-# Upload image 
-    file = request.files.get('imgae_file')
-    if file and file.filename != '':
-        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(filepath)
-        image_name = file.filename
-    else: 
-        image_name = request.form.get('current_image')
 
-        if image_name: 
-            filepath = os.path.join(UPLOAD_FOLDER, image_name)   
-        if request.form.get('filter') == 'shrink':
-            shrink_image(filepath)
-            
-        if request.form.get('filter') == 'grow':
-            grow_image(filepath)
+    if request.method =='POST': 
+        file = request.files.get('image_file')
+        filter_name = request.forms.get('filter')
+        current_image = request.form.get('current_image')
+
+    if file and file.filename != '': 
+        path = os.path.join(app.config['UPLOADS'], file.filename)
+        file.save(path)
+        image_name = file.filename 
     
-    return render_template('index.html', image_name=image_name)
+    elif filter_name == 'shrink' and current_image: 
+        path = os.path.join(app.config['UPLOADS'], current_image)
+        if os.path.exits(path): 
+            shrink_image(path)
+            image_name = current_image
+    
+    if filter_name == 'grow' and current_image: 
+        path = os.path.join(app.config['UPLOADS'], current_image)
+        if os.path.exits(path): 
+            grow_image(path)
+            image_name = current_image
+            
+        elif current_image: 
+            image_name = current_image 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        return render_template('index.html', image_name=image_name)
