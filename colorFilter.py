@@ -8,28 +8,37 @@ app = Flask(__name__)
 
 #Jigsaw function
 def scarmble_jigsaw(img, grid_size = 4):
+   def scramble_jigsaw(img, grid_size = 4):
     w, h = img.size
-    tile_w = w
-    tile_h = h
+
+    tile_w = w // grid_size
+    tile_h = h // grid_size
 
     tiles = []
+
     for row in range(grid_size):
         for col in range(grid_size):
             left = col * tile_w
             upper = row * tile_h
-            right = left + tile_w
-            lower = upper + tile_h
-            tile = img.crop((left, upper, right, lower))
-            tiles.append(tile)
 
+            # Last column/row must extend to the edge
+            right = (col + 1) * tile_w if col < grid_size - 1 else w
+            lower = (row + 1) * tile_h if row < grid_size - 1 else h
+
+            # Safety check: ensure valid crop box
+            if right > left and lower > upper:
+                tiles.append(img.crop((left, upper, right, lower)))
+
+    
     random.shuffle(tiles)
-    scrambled = Image.new("RGB" (w, h))
+    scrambled = Image.new("RGB", (w, h))
     index = 0
 
     for row in range(grid_size):
         for col in range(grid_size):
             left = col * tile_w
             upper = row * tile_h
+
             scrambled.paste(tiles[index], (left, upper))
             index += 1
 
