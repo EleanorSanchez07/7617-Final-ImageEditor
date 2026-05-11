@@ -7,7 +7,7 @@ import random
 app = Flask(__name__)
 
 #Jigsaw function
-def scarmble_jigsaw(img, grid_size = 4):
+def scramble_jigsaw(img, grid_size = 4):
    w, h = img.size
 
    tile_w = w // grid_size
@@ -89,9 +89,6 @@ def index():
             img = apply_negative(img)
         if filter_type == "scramble":
             img = scramble_jigsaw(img)
-        # Save result to static folder (Flask can serve it automatically)
-        img.save("static/result.png")
-        output = "static/result.png"
 
     return render_template("buttons.html", output=output)
 
