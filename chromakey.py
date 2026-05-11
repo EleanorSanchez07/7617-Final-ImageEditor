@@ -34,7 +34,7 @@ def chromakey_pixel_replacement(original_pix: tuple[int, int, int], replacement_
     else:
         return original_pix
 
-def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str = None): # pyright: ignore[reportArgumentType]
+def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str | None = None):
     # Changes size of images we're working on. Reduce for performance.
     new_background = new_background.resize((256, 256))
     original = original.resize(new_background.size)
