@@ -1,4 +1,7 @@
-#Jesus Ortiz-Ramos
+# Jesus Ortiz-Ramos
+# Growing and Shrinking File
+# This is a simple web-based image resizer. 
+#It allows a user to upload a picture and then use buttons to either double its size ("grow") or cut its size in half ("shrink").
 
 from flask import Flask, render_template, request
 from flask_bootstrap import Bootstrap5
