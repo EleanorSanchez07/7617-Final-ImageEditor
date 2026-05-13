@@ -1,4 +1,6 @@
 # Jesus Ortiz-Ramos
+#Date: 04-29-26
+#Course: CST205-01_2262: Multimedia Design & Progmng
 # Growing and Shrinking File
 # This is a simple web-based image resizer. 
 #It allows a user to upload a picture and then use buttons to either double its size ("grow") or cut its size in half ("shrink").
