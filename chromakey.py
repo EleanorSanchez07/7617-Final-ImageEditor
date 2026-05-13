@@ -14,6 +14,7 @@ import os
 from multiprocessing import Pool
 from typing import Any
 
+# Patching this so colormath doesn't break everything.
 def patch_asscalar(a):
     return a.item()
 
@@ -22,44 +23,48 @@ setattr(numpy, "asscalar", patch_asscalar)
 # app = Flask(__name__)
 # bs = Bootstrap5(app)
 
+# Global scope for the color we're comparing for the chroma key.
 chroma_lab: sRGBColor | Any = sRGBColor(100, 100, 100)
 
 def chromakey_pixel_replacement(original_pix: tuple[int, int, int], replacement_pix: tuple[int, int, int]) -> tuple[int, int, int]:
+    # When we refer to 'chroma_lab' in this function, we're looking at the global variable.
     global chroma_lab
     
+    # Converting pixel to Lab color.
     original_pix_converted = convert_color(sRGBColor(original_pix[0], original_pix[1], original_pix[2]), LabColor)
     
+    # If the color is close enough to the chroma key, return the background replacement  pixel. Otherwise, return the original.
+    # Color distance is the killer function regarding time complexity, and the reason for my use of multiprocessing.
     if delta_e_cie2000(original_pix_converted, chroma_lab) < 77:
         return replacement_pix
     else:
         return original_pix
 
 def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str | None = None):
-    # Changes size of images we're working on. Reduce for performance.
-    new_background = new_background.resize((256, 256))
-    original = original.resize(new_background.size)
+    # Changes size of images we're working on. Reduce resolution specified on line 45 for performance, or comment out line 45 for lossless conversion.
+    original = original.resize((256, 256))
+    new_background = new_background.resize(original.size)
     
+    # Referring to the global variable 'chroma_lab' change it to a Lab-converted version of the chroma key.
     global chroma_lab
     chroma_lab = convert_color(sRGBColor(chroma_color[0], chroma_color[1], chroma_color[2]), LabColor)
     
+    # List of all the pixels for the foreground image  (orig_pixels) and background pixels (new_pixels)
     orig_pixels = list(original.get_flattened_data())
     new_pixels = list(new_background.get_flattened_data())
 
-    # t = time.time()
+    # t = time.time() # Start timer
     with Pool() as pool:
+        # Take async results and use a list comprehension to put those results into the data of our return image. Using Pool().apply_async() 
+        # runs this on multiple threads (in theory) for better performance, aproximately a 50% runtime decrease from my previous method.
         async_results = [pool.apply_async(chromakey_pixel_replacement, args = (orig_pixels[i], new_pixels[i])) for i in range(len(orig_pixels))]
         orig_pixels = [ar.get() for ar in async_results]
+
+    # print(time.time() - t) # Print timer result.
     
-    # Below is the old approach which is about 2x slower (on my machine anyway) than with my multiprocessing approach. -Eleanor
-    # for pix_index in range(len(orig_pixels)):
-    #     cur_pixel = convert_color(sRGBColor(orig_pixels[pix_index][0], orig_pixels[pix_index][1], orig_pixels[pix_index][2]), LabColor) # pyright: ignore[reportIndexIssue]        
-        
-    #     if delta_e_cie2000(cur_pixel, chroma_lab) < 77:
-    #         orig_pixels[pix_index] = new_pixels[pix_index]
-    # print(time.time() - t)
-            
+    # Put the data into our image, save it, and return it.
     original.putdata(orig_pixels) #pyright: ignore[reportArgumentType]
-    original.show()
+    # original.show()
     
     if(save_path != None):
         original.save(save_path)
