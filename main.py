@@ -1,9 +1,9 @@
 # CST 205
 # Project: 
-#CSUMB Image Filter Editor
+# CSUMB Image Filter Editor
 # Team: 
-#Humberto Ramirez, Eleanor Sanchez, Abraham Sanchez, Jesus Ortiz, Enrique Vega
-
+# Humberto Ramirez, Eleanor Sanchez, Abraham Sanchez, Jesus Ortiz, Enrique Vega
+# GITBUH: https://github.com/EleanorSanchez07/7617-Final-ImageEditor
 
 from flask import Flask, render_template, request, send_from_directory, redirect, url_for
 from flask_bootstrap import Bootstrap5
