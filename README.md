@@ -61,6 +61,10 @@ GITHUB REPOSITORY LINK
 
 https://github.com/EleanorSanchez07/7617-Final-ImageEditor
 
+TRELLO LINK
+
+https://trello.com/invite/b/69e6a73745f9f73c91a0d222/ATTI5d873450e7bdd2ba3041a1c65b58791b6ED08420/final-project-7617
+
 
 FUTURE WORK
 1) Add sliders to manage the amount of the filter user wants added.
