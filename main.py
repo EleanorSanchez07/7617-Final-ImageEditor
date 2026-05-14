@@ -1,69 +1,67 @@
 # CST 205
-# Humberto Ramirez
-# Eleanor Sanchez
-# Abraham Sanchez
-# Jesus Ortiz
-# Enrique Vega
+# Project: 
+#CSUMB Image Filter Editor
+# Team: 
+#Humberto Ramirez, Eleanor Sanchez, Abraham Sanchez, Jesus Ortiz, Enrique Vega
 
-
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for
 from flask_bootstrap import Bootstrap5
 from PIL import Image, ImageOps
+from colormath.color_objects import sRGBColor, LabColor # In control of Chroma
+from colormath.color_conversions import convert_color
+from colormath.color_diff import delta_e_cie2000
 import numpy
+import time
 import os
 import random
+from multiprocessing import Pool
+from typing import Any
 
-
-app = Flask(__name__)
+app = Flask(__name__) # Initiates The Flask App
 bootstrap = Bootstrap5(app)
 
-UPLOAD_FOLDER = 'static/uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Variable saying where to save images (a constant)
+UPLOAD_FOLDER = 'static/uploads' 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Makes the folder through operating system
 
-# Humberto Ramirez
-# MIRROR FUNCTION
+# Patching numpy so colormath doesn't break
+def patch_asscalar(a):
+    return a.item()
+
+setattr(numpy, "asscalar", patch_asscalar)
+
+# HUMBERTO RAMIREZ - MIRROR FUNCTION
 def mirror_image(path):
     img = Image.open(path)
-    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    img = img.transpose(Image.FLIP_LEFT_RIGHT) # Flips the image from left to right
     img.save(path)
 
-# Jesus Ortiz
-# SHRINK FUNCTION
+# JESUS ORTIZ - SHRINK & GROW FUNCTIONS
 def shrink_image(path):
     img = Image.open(path)
-
-    width = img.width // 2
+    width = img.width // 2   # Shrink the image by dividing w h
     height = img.height // 2
-
     img = img.resize((width, height))
     img.save(path)
 
-#Jesus Ortiz
-# GROW FUNCTION
 def grow_image(path):
     img = Image.open(path)
-
-    width = img.width * 2
+    width = img.width * 2    # Multiplies the size to grow
     height = img.height * 2
-
     img = img.resize((width, height))
     img.save(path)
 
-# Eleanor Sanchez
-# CROP
+# ELEANOR SANCHEZ - CROP & CHROMA KEY FUNCTIONS
 def crop(orig_image, top_left, bottom_right):
     orig_width = orig_image.width
     orig_height = orig_image.height
-
     new_width = bottom_right[0] - top_left[0]
     new_height = bottom_right[1] - top_left[1]
 
     try:
         assert (
-            new_width > 0 and
-            new_height > 0 and
-            top_left[0] >= 0 and
-            top_left[1] >= 0 and
+            new_width > 0 and new_height > 0 and
+            top_left[0] >= 0 and top_left[1] >= 0 and
             bottom_right[0] <= orig_width and
             bottom_right[1] <= orig_height
         )
@@ -72,258 +70,196 @@ def crop(orig_image, top_left, bottom_right):
         return None
 
     cropped_image = Image.new("RGB", (new_width, new_height))
-
     for x in range(new_width):
         for y in range(new_height):
             _x = x + top_left[0]
             _y = y + top_left[1]
             pixel = orig_image.getpixel((_x, _y))
             cropped_image.putpixel((x, y), pixel)
-
     return cropped_image
 
-
-# CROP
 def crop_image(path):
     img = Image.open(path).convert("RGB")
-
     width, height = img.size
-
     # Crop center of image
     top_left = (width // 4, height // 4)
     bottom_right = (3 * width // 4, 3 * height // 4)
-
     cropped = crop(img, top_left, bottom_right)
-
     if cropped:
         cropped.save(path)
+
+def chromakey_pixel_replacement(original_pix, replacement_pix, target_lab):
+    # Convert the current pixel to Lab for comparison
+    original_rgb = sRGBColor(original_pix[0], original_pix[1], original_pix[2], is_upscaled=True)
+    original_lab = convert_color(original_rgb, LabColor)
     
-# Elanor Shanchez
-# CHROMA KEY FUNCTION
-def chroma_image(original_path, background_path):
-    original = Image.open(original_path).convert("RGB")
-    background = Image.open(background_path).convert("RGB")
+    # If the color is close enough to the chroma key, return replacement. Otherwise, original.
+    # Color distance is the killer function regarding time complexity, and the reason for my use of multiprocessing.
+    if delta_e_cie2000(original_lab, target_lab) < 77:
+        return replacement_pix
+    else:
+        return original_pix
 
-    # Make background same size as original
-    background = background.resize(original.size)
+def chromakey(original: Image.Image, new_background: Image.Image, chroma_color: tuple[int, int, int], save_path: str | None = None):
+    original = original.resize((256, 256))
+    new_background = new_background.resize(original.size)
+    
+    target_rgb = sRGBColor(chroma_color[0], chroma_color[1], chroma_color[2], is_upscaled=True)
+    target_lab = convert_color(target_rgb, LabColor)
+    
+    #List of all the pixels for the foreground image  (orig_pixels) and background pixels (new_pixels)
+    orig_pixels = list(original.getdata())
+    new_pixels = list(new_background.getdata())
 
-    width, height = original.size
+     # t = time.time() # Start timer
+    with Pool() as pool:
+        # Take async results and use a list comprehension to put those results into the data of our return image. Using Pool().apply_async() 
+        # runs this on multiple threads (in theory) for better performance, aproximately a 50% runtime decrease from my previous method.
+        async_results = [
+            pool.apply_async(chromakey_pixel_replacement, args=(orig_pixels[i], new_pixels[i], target_lab)) 
+            for i in range(len(orig_pixels))
+        ]
+        result_pixels = [ar.get() for ar in async_results]
+     # print(time.time() - t) # Print timer result.
 
-    new_image = Image.new("RGB", (width, height))
+     # Put the data into our image, save it, and return it.
+    original.putdata(result_pixels) #pyright: ignore[reportArgumentType]
+     # original.show()
+    if save_path:
+        original.save(save_path)
+    return original
 
-    # Green screen color
-    chroma_color = (0, 255, 0)
-
-    for x in range(width):
-        for y in range(height):
-            original_pixel = original.getpixel((x, y))
-            background_pixel = background.getpixel((x, y))
-
-            r, g, b = original_pixel
-
-            # If pixel is mostly green, replace it
-            if g > 100 and g > r * 1.4 and g > b * 1.4:
-                new_image.putpixel((x, y), background_pixel)
-            else:
-                new_image.putpixel((x, y), original_pixel)
-
-    new_image.save(original_path)
-
-# Humberto Ramirez
-# STACK
+# HUMBERTO RAMIREZ - STACK FUNCTIONS
 def stack_image(base_path, overlay_path):
     base = Image.open(base_path)
     overlay = Image.open(overlay_path)
-
-    # Resize overlap
-    overlay = overlay.resize((base.width // 2, base.height // 2))
-
-    # Center
-    x = (base.width - overlay.width) // 2
+    overlay = overlay.resize((base.width // 2, base.height // 2)) # Resize overlap
+    x = (base.width - overlay.width) // 2 # Center
     y = (base.height - overlay.height) // 2
-
-    # Paste overlay
-    base.paste(overlay, (x, y))
-
+    base.paste(overlay, (x, y)) # Paste overlay
     base.save(base_path)
 
-# Humberto Ramirez
-# Random Stack
 def random_stack_image(base_path, overlay_path):
     base = Image.open(base_path)
     overlay = Image.open(overlay_path)
-
-    # Resize overlay
     overlay = overlay.resize((base.width // 2, base.height // 2))
-
-    # Pick random position
     max_x = base.width - overlay.width
     max_y = base.height - overlay.height
-
-    x = random.randint(0, max_x)
+    x = random.randint(0, max_x) # Pick random position
     y = random.randint(0, max_y)
-
-    # Paste overlay
     base.paste(overlay, (x, y))
-
     base.save(base_path)
 
-# Enrique Vega
-# SCRAMBLE JIGSAW FUNCTION
+# ENRIQUE VEGA - JIGSAW, SEPIA, & NEGATIVE
 def scramble_jigsaw_image(path, grid_size=4):
     img = Image.open(path).convert("RGB")
-
     w, h = img.size
-    tile_w = w // grid_size
-    tile_h = h // grid_size
-
+    tile_w, tile_h = w // grid_size, h // grid_size
     tiles = []
-
+    # Cuts the image into sections
     for row in range(grid_size):
         for col in range(grid_size):
             left = col * tile_w
             upper = row * tile_h
             right = (col + 1) * tile_w if col < grid_size - 1 else w
             lower = (row + 1) * tile_h if row < grid_size - 1 else h
-
             tile = img.crop((left, upper, right, lower))
             tiles.append(tile)
-
     random.shuffle(tiles)
-
     scrambled = Image.new("RGB", (w, h))
     index = 0
-
+    # Scrambles the tiles
     for row in range(grid_size):
         for col in range(grid_size):
             left = col * tile_w
             upper = row * tile_h
-
             scrambled.paste(tiles[index], (left, upper))
             index += 1
-
     scrambled.save(path)
 
-# Enrique Vega
-# SEPIA FUNCTION
 def sepia_pixel(pixel):
     r, g, b = pixel
-
+    # Tint shadows, midtones, and highlights differently
     if r < 63:
-        r = int(r * 1.1)
-        b = int(b * 0.9)
+        r, b = int(r * 1.1), int(b * 0.9)
     elif r < 192:
-        r = int(r * 1.15)
-        b = int(b * 0.85)
+        r, b = int(r * 1.15), int(b * 0.85)
     else:
-        r = int(r * 1.08)
-        b = int(b * 0.5)
-
-    r = min(r, 255)
-    g = min(g, 255)
-    b = min(b, 255)
-
-    return (r, g, b)
-
+        r, b = int(r * 1.08), int(b * 0.5)
+    return (min(r, 255), min(g, 255), min(b, 255))
 
 def apply_sepia_image(path):
     img = Image.open(path).convert("RGB")
     width, height = img.size
-
     new_img = Image.new("RGB", (width, height))
-
     for x in range(width):
         for y in range(height):
             pixel = img.getpixel((x, y))
-            new_pixel = sepia_pixel(pixel)
-            new_img.putpixel((x, y), new_pixel)
-
+            new_img.putpixel((x, y), sepia_pixel(pixel))
     new_img.save(path)
 
-# Enrique Vega
-# NEGATIVE FUNCTION
 def apply_negative_image(path):
     img = Image.open(path).convert("RGB")
     img = ImageOps.invert(img)
     img.save(path)
-  
 
-
-# ROUTE
+# MAIN ROUTE
 @app.route('/', methods=['GET', 'POST'])
 def home():
     image_name = None
-
     if request.method == 'POST':
-
         # Upload image
         file = request.files.get('image_file')
         if file and file.filename != '':
             filepath = os.path.join(UPLOAD_FOLDER, file.filename)
             file.save(filepath)
             image_name = file.filename
-
-        # Apply filters
+        # Apply filters by requesting to the html
         else:
             image_name = request.form.get('current_image')
-
             if image_name:
                 filepath = os.path.join(UPLOAD_FOLDER, image_name)
-
-                if request.form.get('filter') == 'mirror':
-                    mirror_image(filepath)
-
-                if request.form.get('filter') == 'shrink':
-                    shrink_image(filepath)
-
-                if request.form.get('filter') == 'grow':
-                    grow_image(filepath)
+                f_type = request.form.get('filter')
                 
-                if request.form.get('filter') == 'crop':
-                    crop_image(filepath)
-                if request.form.get('filter') == 'chroma':
-                    background_file = request.files.get('background_image')
-                    
-                    if background_file and background_file.filename != '':
-                        background_path = os.path.join(UPLOAD_FOLDER, background_file.filename)
-                        background_file.save(background_path)
-                        
-                        chroma_image(filepath, background_path)
+                if f_type == 'mirror': mirror_image(filepath)
+                if f_type == 'shrink': shrink_image(filepath)
+                if f_type == 'grow': grow_image(filepath)
+                if f_type == 'crop': crop_image(filepath)
+                if f_type == 'sepia': apply_sepia_image(filepath)
+                if f_type == 'negative': apply_negative_image(filepath)
+                if f_type == 'pixel_shuffle': scramble_jigsaw_image(filepath)
+                
+                if f_type == 'chroma':
+                    bg_file = request.files.get('background_image')
+                    if bg_file and bg_file.filename != '':
+                        bg_path = os.path.join(UPLOAD_FOLDER, bg_file.filename)
+                        bg_file.save(bg_path)
+                        chromakey(Image.open(filepath).convert("RGB"), 
+                                  Image.open(bg_path).convert("RGB"), 
+                                  (0, 255, 0), save_path=filepath)
+                
+                if f_type == 'stack':
+                    ov_file = request.files.get('overlay_image')
+                    if ov_file and ov_file.filename != '':
+                        ov_path = os.path.join(UPLOAD_FOLDER, ov_file.filename)
+                        ov_file.save(ov_path)
+                        stack_image(filepath, ov_path)
 
-                if request.form.get('filter') == 'stack':
-                    overlay_file = request.files.get('overlay_image')
-                    if overlay_file and overlay_file.filename != '':
-                        overlay_path = os.path.join(UPLOAD_FOLDER, overlay_file.filename)
-                        overlay_file.save(overlay_path)
-                        
-                        stack_image(filepath, overlay_path)
-    
-                if request.form.get('filter') == 'sepia':
-                    apply_sepia_image(filepath)
+                if f_type == 'random_stack':
+                    ov_file = request.files.get('overlay_image')
+                    if ov_file and ov_file.filename != '':
+                        ov_path = os.path.join(UPLOAD_FOLDER, ov_file.filename)
+                        ov_file.save(ov_path)
+                        random_stack_image(filepath, ov_path)
 
-                if request.form.get('filter') == 'negative':
-                    apply_negative_image(filepath)
-                    
-                if request.form.get('filter') == 'pixel_shuffle':
-                    scramble_jigsaw_image(filepath)
-
-                if request.form.get('filter') == 'random_stack':
-                    overlay_file = request.files.get('overlay_image')
-                    if overlay_file and overlay_file.filename != '':
-                        overlay_path = os.path.join(UPLOAD_FOLDER, overlay_file.filename)
-                        overlay_file.save(overlay_path)
-                        
-                        random_stack_image(filepath, overlay_path)
-
-                if request.form.get('filter') == 'save':
+                # ABRAHAM SANCHEZ - SAVE & RESET LOGIC
+                if f_type == 'save': # Checks for the save click button
                     return send_from_directory(UPLOAD_FOLDER, image_name, as_attachment=True)
-
-                if request.form.get('filter') == 'reset': #Checks for the reset click button
-                    return redirect(url_for('home'))#refreshes to start from scratch
-
+                
+                if f_type == 'reset': # Checks for the reset click button
+                    return redirect(url_for('home')) # Refreshes to start from scratch
 
     return render_template('index.html', image_name=image_name)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
