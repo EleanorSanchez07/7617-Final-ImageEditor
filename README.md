@@ -21,6 +21,7 @@ RUN OPERATION:
 1) Have Python installed and its libraries (flask, flask-bootstrap, Pillow, colormath, numpy)
 2) Correct Structure:
 
+
 project-folder/
 
 │
@@ -35,10 +36,12 @@ project-folder/
 
 └── Image_editor.py  # The main Python file
 
+
 3) In your terminal enter:
 flask --app Image_editor.py --debug run 
 
 Once the server starts, open your browser and navigate to (http://127.0.0.1:5000)
+
 
 OPERATION WITHIN WEBSITE:
 1) Click the Choose File bar to choose within your File Explorer
@@ -53,9 +56,11 @@ OPERATION WITHIN WEBSITE:
 6) Once done, click Save to save it into the Upload folder in your File Explorer
 7) Or click reset to start from scratch.
 
+
 GITHUB REPOSITORY LINK
 
 https://github.com/EleanorSanchez07/7617-Final-ImageEditor
+
 
 FUTURE WORK
 1) Add sliders to manage the amount of the filter user wants added.
