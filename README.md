@@ -19,11 +19,17 @@ RUN OPERATION:
 2) Correct Structure:
 
 project-folder/
+
 │
+
 ├── static/
-│   └── uploads/     # Processed images will be stored here (also monte logo)
+
+│   └── uploads/       # Processed images will be stored here (also monte logo)
+
 ├── templates/
-│   └── index.html   # The html file
+
+│   └── index.html     # The html file
+
 └── Image_editor.py  # The main Python file
 
 3) In your terminal enter:
