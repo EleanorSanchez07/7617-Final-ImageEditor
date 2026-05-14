@@ -1,12 +1,15 @@
 CSUMB Image Filter Editor
+
 TEAM MEMBERS:
 Humberto Ramirez, Eleanor Sanchez, 
 Abraham Sanchez-Pereyra, Jesus Ortiz and Enrique Vega
 
 CLASS: CST 205: Multimedia Design & Programming
+
 DATE: May 13, 2026
 
 PROJECT DESCRIPTION:
+
 A web-based application built using Flask and the Pillow (PIL) library. 
 It allows users to upload images and apply a variety of custom-coded filters and transformations.
 
@@ -51,6 +54,7 @@ OPERATION WITHIN WEBSITE:
 7) Or click reset to start from scratch.
 
 GITHUB REPOSITORY LINK
+
 https://github.com/EleanorSanchez07/7617-Final-ImageEditor
 
 FUTURE WORK
