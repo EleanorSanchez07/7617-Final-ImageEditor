@@ -4,6 +4,7 @@
 # Team: 
 #Humberto Ramirez, Eleanor Sanchez, Abraham Sanchez, Jesus Ortiz, Enrique Vega
 
+
 from flask import Flask, render_template, request, send_from_directory, redirect, url_for
 from flask_bootstrap import Bootstrap5
 from PIL import Image, ImageOps
@@ -16,7 +17,7 @@ import os
 import random
 from multiprocessing import Pool
 from typing import Any
-
+# ABRAHAM SANCHEZ-PEREYRA - STARTING LAYOUT AND FOLDER INPUT/UPLOAD
 app = Flask(__name__) # Initiates The Flask App
 bootstrap = Bootstrap5(app)
 
